@@ -1,88 +1,77 @@
 import { useState, useEffect } from 'react';
 import ProductCard from './components/ProductCard';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import ContactForm from './components/ContactForm';
 
 function App() {
   const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // Состояние для корзины (поднято на уровень App)
   const [cartCount, setCartCount] = useState(0);
-
-  // Бонусные состояния для загрузки и ошибок
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     async function loadProducts() {
       try {
-        setLoading(true);
         const response = await fetch('http://localhost:3001/products');
-        
-        if (!response.ok) {
-          throw new Error('Ошибка сервера');
-        }
-
         const data = await response.json();
         setProducts(data);
-      } catch (err) {
-        setError('Не удалось загрузить товары');
-      } finally {
-        setLoading(false);
+      } catch (error) {
+        console.error('Ошибка загрузки:', error);
       }
     }
     loadProducts();
   }, []);
 
-  // Функция для увеличения счетчика корзины
-  function handleAddToCart(product) {
+  function handleAddToCart() {
     setCartCount(cartCount + 1);
   }
 
-  // Фильтрация товаров по поиску
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
-    <div className="catalog-app">
-      {/* Шапка с выводом счетчика корзины */}
-      <header className="header" style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: '#2e7d32', color: 'white' }}>
-        <h1>🌾 АгроМаркет</h1>
-        <div className="cart-info">
-          Корзина: {cartCount}
-        </div>
-      </header>
+    <>
+      <Header cartCount={cartCount} />
 
-      <main className="catalog" style={{ padding: '2rem' }}>
-        <h2>Каталог</h2>
+      <main className="page">
+        <section id="catalog" className="catalog">
+          <div className="catalog-toolbar">
+            <h2>Каталог</h2>
+            <input
+              type="search"
+              placeholder="Поиск товара..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
 
-        {/* Управляемый инпут поиска */}
-        <input
-          type="text"
-          placeholder="Поиск товара..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-
-        {/* Условный рендеринг: Загрузка, Ошибка или Список */}
-        {loading && <p>Загрузка...</p>}
-        
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-
-        {!loading && !error && (
-          <div className="products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
+          <div className="product-grid">
             {filteredProducts.map((product) => (
               <ProductCard 
                 key={product.id} 
                 product={product} 
-                onAdd={handleAddToCart} 
+                onAdd={handleAddToCart}
+                featured={product.id === 1}
               />
             ))}
           </div>
-        )}
+        </section>
+
+        <aside id="delivery" className="sidebar">
+          <h3>Доставка</h3>
+          <ul>
+            <li>Астана — в день</li>
+            <li> область — 2–3 дня</li>
+            <li>Бесплатно от </li>
+          </ul>
+        </aside>
+
+        <ContactForm />
       </main>
-    </div>
+
+      <Footer />
+    </>
   );
 }
-
-export default App;
+export default App; 
